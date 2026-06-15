@@ -1,0 +1,23 @@
+{
+  "name": "horizon-agent",
+  "version": "1.0.0",
+  "description": "Collaborative Multi-Agent Bridge between Google AI and Claude via MCP",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "ts-node src/server.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.1",
+    "express": "^4.21.2",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.2",
+    "@types/ws": "^8.5.13",
+    "typescript": "^5.7.2",
+    "ts-node": "^10.9.2"
+  }
+}

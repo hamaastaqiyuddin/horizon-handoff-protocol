@@ -1,0 +1,6 @@
+node_modules/
+dist/
+horizon-agent-db.json
+horizon-agent.db
+.DS_Store
+.env

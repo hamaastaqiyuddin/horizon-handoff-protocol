@@ -37,11 +37,46 @@ function getGitInfo(): { branch: string; commit: string; diff: string; files: st
 
     const branch = execSync('git branch --show-current').toString().trim();
     const commit = execSync('git log -1 --format=%h').toString().trim();
-    const diff = execSync('git diff HEAD').toString().trim();
+
+    // Optimize tokens: exclude lockfiles, compiled artifacts, and binary assets
+    const excludePatterns = [
+      "':!package-lock.json'",
+      "':!pnpm-lock.yaml'",
+      "':!yarn.lock'",
+      "':!node_modules/*'",
+      "':!dist/*'",
+      "':!build/*'",
+      "':!*.png'",
+      "':!*.jpg'",
+      "':!*.jpeg'",
+      "':!*.gif'",
+      "':!*.ico'",
+      "':!*.pdf'",
+      "':!*.zip'",
+      "':!*.tar.gz'"
+    ].join(' ');
+
+    const diff = execSync(`git diff HEAD -- . ${excludePatterns}`).toString().trim();
     
     const statusOutput = execSync('git status --porcelain').toString().trim();
+    
+    const isExcluded = (file: string) => {
+      const excludedExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.ico', '.pdf', '.zip', '.tar.gz'];
+      const excludedFiles = ['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock'];
+      const excludedDirs = ['node_modules/', 'dist/', 'build/'];
+      
+      return (
+        excludedFiles.includes(file) ||
+        excludedExtensions.some(ext => file.endsWith(ext)) ||
+        excludedDirs.some(dir => file.startsWith(dir) || file.includes(`/${dir}`))
+      );
+    };
+
     const files = statusOutput
-      ? statusOutput.split('\n').map(line => line.substring(3).trim())
+      ? statusOutput
+          .split('\n')
+          .map(line => line.substring(3).trim())
+          .filter(file => !isExcluded(file))
       : [];
 
     return { branch, commit, diff, files };

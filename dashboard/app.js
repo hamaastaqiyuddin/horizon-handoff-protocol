@@ -25,6 +25,9 @@ const nodeHorizon = document.getElementById('node-horizon');
 const elStatusAntigravity = document.getElementById('status-antigravity');
 const elStatusClaude = document.getElementById('status-claude');
 
+const elTokenStatusAntigravity = document.getElementById('token-status-antigravity');
+const elTokenStatusClaude = document.getElementById('token-status-claude');
+
 const pulseLeft = document.getElementById('pulse-left');
 const pulseRight = document.getElementById('pulse-right');
 
@@ -191,6 +194,20 @@ function updateAgentStatusDisplay() {
 // Run status checker every 10 seconds
 setInterval(updateAgentStatusDisplay, 10000);
 
+function updateTokenStatusDisplay(agent, status) {
+  const elBadge = agent === 'antigravity' ? elTokenStatusAntigravity : elTokenStatusClaude;
+  
+  if (!status || status === 'normal') {
+    elBadge.style.display = 'none';
+    elBadge.className = 'status-tag token-status-tag';
+    elBadge.textContent = '';
+  } else {
+    elBadge.style.display = 'inline-block';
+    elBadge.textContent = status === 'low' ? '⚠️ LOW TOKENS' : '🚨 DEPLETED';
+    elBadge.className = `status-tag token-status-tag ${status}`;
+  }
+}
+
 // ----------------------------------------------------
 // Animation Trigger Helpers
 // ----------------------------------------------------
@@ -253,6 +270,10 @@ async function fetchInitialState() {
     heartbeats.antigravity = memories['heartbeat_antigravity'] || null;
     heartbeats.claude = memories['heartbeat_claude'] || null;
     updateAgentStatusDisplay();
+
+    // Read token statuses from memory
+    updateTokenStatusDisplay('antigravity', memories['token_status_antigravity'] || 'normal');
+    updateTokenStatusDisplay('claude', memories['token_status_claude'] || 'normal');
 
     renderMemory();
 
@@ -324,6 +345,10 @@ function connectWebSocket() {
         } else if (data.key === 'heartbeat_claude') {
           heartbeats.claude = data.value;
           updateAgentStatusDisplay();
+        } else if (data.key === 'token_status_antigravity') {
+          updateTokenStatusDisplay('antigravity', data.value);
+        } else if (data.key === 'token_status_claude') {
+          updateTokenStatusDisplay('claude', data.value);
         }
         renderMemory();
         break;
@@ -335,6 +360,10 @@ function connectWebSocket() {
 
       case 'token_stats':
         updateStats(data.stats);
+        break;
+
+      case 'token_status_update':
+        updateTokenStatusDisplay(data.agent, data.status);
         break;
 
       case 'routing_recommendation':

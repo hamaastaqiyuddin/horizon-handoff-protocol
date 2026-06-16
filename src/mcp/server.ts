@@ -14,7 +14,8 @@ import {
   listTasks,
   setMemoryValue,
   getMemoryValue,
-  logTokens
+  logTokens,
+  getAccumulatedStats
 } from '../db/sqlite';
 import { Message, Task, TokenStats } from '../types';
 
@@ -239,6 +240,41 @@ export function createMCPServer(): Server {
             required: ['agent', 'prompt_tokens', 'completion_tokens'],
           },
         },
+        {
+          name: 'set_agent_token_status',
+          description: 'Manually set the token/rate-limit status of an agent to trigger automatic routing.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              agent: {
+                type: 'string',
+                enum: ['antigravity', 'claude'],
+                description: 'The agent name.',
+              },
+              status: {
+                type: 'string',
+                enum: ['normal', 'low', 'depleted'],
+                description: 'The token/rate-limit status.',
+              },
+            },
+            required: ['agent', 'status'],
+          },
+        },
+        {
+          name: 'get_agent_token_status',
+          description: 'Get the token/rate-limit status of an agent.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              agent: {
+                type: 'string',
+                enum: ['antigravity', 'claude'],
+                description: 'The agent name.',
+              },
+            },
+            required: ['agent'],
+          },
+        },
       ],
     };
   });
@@ -366,24 +402,36 @@ export function createMCPServer(): Server {
           const { prompt, context_size_chars } = args as any;
           const lowerPrompt = prompt.toLowerCase();
           
-          // Heuristics for routing
+          // Check agent token statuses from shared memory
+          const statusClaude = getMemoryValue('token_status_claude') || 'normal';
+          const statusAntigravity = getMemoryValue('token_status_antigravity') || 'normal';
+
           let recommendedAgent: 'claude' | 'antigravity' = 'claude';
           let reason = '';
-          
           const estimatedTokens = Math.ceil(context_size_chars / 4);
-          
-          if (estimatedTokens > 120000) {
+
+          // Priority 1: Token exhaustion routing overrides
+          if (statusClaude !== 'normal' && statusAntigravity === 'normal') {
             recommendedAgent = 'antigravity';
-            reason = `Context size is extremely large (${estimatedTokens.toLocaleString()} tokens). Gemini is recommended due to its native 2M token context window and cost-efficiency.`;
-          } else if (lowerPrompt.includes('refactor') || lowerPrompt.includes('algorithm') || lowerPrompt.includes('debug complex') || lowerPrompt.includes('optimize logic')) {
+            reason = `Claude token budget is currently flagged as ${statusClaude.toUpperCase()}. Automatically routing all processes to Gemini (Antigravity) to preserve resources.`;
+          } else if (statusAntigravity !== 'normal' && statusClaude === 'normal') {
             recommendedAgent = 'claude';
-            reason = 'The task demands high reasoning depth and precise code architecture logic. Claude 3.5 Sonnet excels at these programming tasks.';
-          } else if (lowerPrompt.includes('read code') || lowerPrompt.includes('survey') || lowerPrompt.includes('explain') || lowerPrompt.includes('summarize')) {
-            recommendedAgent = 'antigravity';
-            reason = 'This is a synthesis/retrieval task across multiple files. Gemini (Antigravity) is ideal and significantly more cost-effective for large reads.';
+            reason = `Gemini (Antigravity) token budget is flagged as ${statusAntigravity.toUpperCase()}. Automatically routing all processes to Claude.`;
           } else {
-            recommendedAgent = 'claude';
-            reason = 'General programming task of moderate size; Claude 3.5 Sonnet is recommended for default coding tasks.';
+            // Default size and capability-based heuristics
+            if (estimatedTokens > 120000) {
+              recommendedAgent = 'antigravity';
+              reason = `Context size is extremely large (${estimatedTokens.toLocaleString()} tokens). Gemini is recommended due to its native 2M token context window and cost-efficiency.`;
+            } else if (lowerPrompt.includes('refactor') || lowerPrompt.includes('algorithm') || lowerPrompt.includes('debug complex') || lowerPrompt.includes('optimize logic')) {
+              recommendedAgent = 'claude';
+              reason = 'The task demands high reasoning depth and precise code architecture logic. Claude 3.5 Sonnet excels at these programming tasks.';
+            } else if (lowerPrompt.includes('read code') || lowerPrompt.includes('survey') || lowerPrompt.includes('explain') || lowerPrompt.includes('summarize')) {
+              recommendedAgent = 'antigravity';
+              reason = 'This is a synthesis/retrieval task across multiple files. Gemini (Antigravity) is ideal and significantly more cost-effective for large reads.';
+            } else {
+              recommendedAgent = 'claude';
+              reason = 'General programming task of moderate size; Claude 3.5 Sonnet is recommended for default coding tasks.';
+            }
           }
 
           // Simple cost estimates
@@ -396,6 +444,7 @@ export function createMCPServer(): Server {
             reason,
             estimatedTokens,
             potentialCostSavingsUSD: savings,
+            statusOverrideApplied: (statusClaude !== 'normal' || statusAntigravity !== 'normal'),
           };
 
           mcpEvents.emit('routing_recommendation', result);
@@ -427,8 +476,51 @@ export function createMCPServer(): Server {
           logTokens(stats);
           mcpEvents.emit('token_stats', stats);
 
+          // Auto-calculate Token Budget and adjust statuses
+          try {
+            const allStats = getAccumulatedStats();
+            const agentStats = allStats.find(s => s.agent === agent);
+            if (agentStats) {
+              const totalTokens = agentStats.total_prompt + agentStats.total_completion;
+              const budgetStr = getMemoryValue(`budget_${agent}`);
+              const budget = budgetStr ? parseInt(budgetStr) : (agent === 'claude' ? 200000 : 2000000);
+
+              let newStatus = 'normal';
+              if (totalTokens >= budget) {
+                newStatus = 'depleted';
+              } else if (totalTokens >= budget * 0.8) {
+                newStatus = 'low';
+              }
+
+              const currentStatus = getMemoryValue(`token_status_${agent}`) || 'normal';
+              if (newStatus !== currentStatus) {
+                setMemoryValue(`token_status_${agent}`, newStatus);
+                mcpEvents.emit('token_status_update', { agent, status: newStatus, totalTokens, budget });
+              }
+            }
+          } catch (err) {
+            console.error('[Token check error]', err);
+          }
+
           return {
             content: [{ type: 'text', text: `Logged ${prompt_tokens + completion_tokens} tokens for ${agent}. Estimated cost: $${estimatedCost.toFixed(5)}` }],
+          };
+        }
+
+        case 'set_agent_token_status': {
+          const { agent, status } = args as any;
+          setMemoryValue(`token_status_${agent}`, status);
+          mcpEvents.emit('token_status_update', { agent, status, manual: true });
+          return {
+            content: [{ type: 'text', text: `Agent ${agent} token status manually set to: ${status}` }],
+          };
+        }
+
+        case 'get_agent_token_status': {
+          const { agent } = args as any;
+          const status = getMemoryValue(`token_status_${agent}`) || 'normal';
+          return {
+            content: [{ type: 'text', text: status }],
           };
         }
 

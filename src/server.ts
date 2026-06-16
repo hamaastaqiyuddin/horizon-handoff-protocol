@@ -143,6 +143,10 @@ mcpEvents.on('token_stats', (stats) => {
   }
 });
 
+mcpEvents.on('token_status_update', (update) => {
+  broadcast('token_status_update', update);
+});
+
 mcpEvents.on('routing_recommendation', (recommendation) => {
   broadcast('routing_recommendation', recommendation);
 });

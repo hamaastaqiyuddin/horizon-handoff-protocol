@@ -1,25 +1,22 @@
 # Horizon Handoff Protocol (HHP)
 
-A stateless, local-first, Git-Ops based handoff protocol and Model Context Protocol (MCP) server designed for seamless, token-efficient task handover and state synchronization between independent AI agents (e.g., Claude Desktop, Cursor, Antigravity, and Terminal Agents).
+> **Unlock the True Power of Multi-Agent Programming!** 🚀
+> 
+> Are you tired of being locked into a single AI model's walled garden? Do you want to orchestrate Claude's brilliant analytical coding precision alongside Gemini's massive 2-million context window seamlessly—without manual copy-pasting, and without wasting thousands of tokens on idle background polling?
+> 
+> Welcome to **Horizon Handoff Protocol (HHP)**! HHP is the ultimate, open-source, stateless Git-Ops developer tool that bridges the gap between independent AI systems. It is designed to save your hard-earned tokens, respect your CPU resources, and supercharge your collaborative coding workflows. Let's build the future, faster and smarter!
 
 ---
 
-## 🌅 Why HHP?
+## ⚡ Supercharged Benefits: Why You Should Try It Today!
 
-Multi-agent programming is the future, but it has two massive limitations today:
-1. **Walled Gardens:** LLM providers (Anthropic, Google, OpenAI) do not communicate with each other. If you run out of tokens in Claude and want to switch to Gemini, you must explain the task from scratch, copy-paste your code changes, and manually reconstruct your workspace.
-2. **Context Bloat (Token Waste):** Continuous background polling or passing entire raw chat histories consumes tens of thousands of tokens per minute, leading to massive API bills and hit rate-limits.
+If you are coding with AI agents, HHP is a game-changer. Here is what you get out of the box:
 
-**HHP solves this.** It acts as a standardized "USB-C" port for AI agent memory. When one agent finishes a session, it packages its progress into a compressed, standardized handoff ticket. The next agent reads this ticket and resumes work instantly in 1 second.
-
----
-
-## ✨ Features
-
-* **Zero-Daemon / Stateless:** No running database, server ports, or idle processes. It only runs when called, consuming **0 idle CPU** and **0 idle tokens**.
-* **Cognitive Context Compression:** Automatically pulls the active git diff, files modified, and compiler errors. It packages them into a highly compact markdown ticket (`.horizon/handoff.md`), saving up to **90% on input tokens** for the receiving agent.
-* **Git-Ops Safety:** Integrates with your repository structure natively. Handoff states can be tracked, versioned, and branched using standard Git.
-* **IDE & Model Agnostic:** Works as a command-line interface (CLI) for humans and an **MCP Server** for any LLM-enabled tool (such as Claude Desktop, Windsurf, or VS Code plugins).
+* 🚀 **100% Zero-Daemon, Zero-Token Waste:** No background database servers, no idle processes, and zero polling. HHP runs on-demand and consumes **0 idle tokens** and **0 idle CPU**. Your token quota is spent purely on actual coding tasks!
+* ⚡ **Estafet Tanpa Copy-Paste (Instant Handoff):** Running out of Claude tokens? Simply type `resume` in Antigravity or Cursor. The next agent immediately inherits the sisa-tugas checklist, modified files, and variables in less than a second.
+* 🧠 **Cognitive Context Compression:** Our smart Git-Ops integration harvests only the relevant git diffs, files modified, and compiler errors. No bloated prompt histories, saving you up to **90% on input tokens**!
+* 🛡️ **Git-Ops Safe & Branch-Ready:** Track every single agent transition natively inside your Git branches. Safe, versioned, and completely developer-friendly.
+* 🔌 **Model & IDE Agnostic:** Exposes standard MCP tools so it plugs right into Claude Desktop, Cursor, Windsurf, or VS Code. It is the universal "USB-C" port for AI agent memory!
 
 ---
 
@@ -36,13 +33,20 @@ Multi-agent programming is the future, but it has two massive limitations today:
 
 ---
 
-## 📥 Installation
+## 🏃‍♂️ Get Started in 60 Seconds!
 
-Install the CLI tool globally:
+Don't wait—experience the future of collaborative AI coding right now!
+
+### 1. Install HHP CLI globally:
 ```bash
 npm install -g .
 ```
-*(Or run directly via `npx` if published to npm).*
+
+### 2. Initialize HHP in your project:
+```bash
+hz init
+```
+This instantly prepares your workspace and creates the `.horizon/` folder. You are now ready to orchestrate handoffs!
 
 ### 🛠️ Setting up MCP
 
@@ -74,13 +78,10 @@ To let your AI agents call HHP automatically, add the server to your MCP configu
 
 ---
 
-## 💻 CLI Commands
+## 💻 CLI Commands Reference
 
 ### 1. `hz init`
-Initialize the `.horizon/` environment in your current project folder.
-```bash
-hz init
-```
+Initialize HHP in the current project directory.
 
 ### 2. `hz save`
 Capture the current workspace state (git status, diff, modified files) and write a handoff ticket.
@@ -110,9 +111,9 @@ hz load
 
 ## 💛 Support & Donations
 
-If this protocol has saved you thousands of tokens and hours of manual handoffs, consider supporting its open-source development!
+If HHP has supercharged your workflow, saved you massive API token costs, and made your development life easier, consider supporting our open-source journey! Your support helps us keep this protocol completely free, optimized, and independent for developers worldwide.
 
-* **Donate via PayPal:** [Support on PayPal](https://paypal.me/hamaastaqiyuddin)
+* **Support on PayPal:** [Donate to hamaastaq on PayPal](https://paypal.me/hamaastaq)
 
 ---
 

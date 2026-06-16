@@ -37,6 +37,32 @@ If you are coding with AI agents, HHP is a game-changer. Here is what you get ou
 
 ---
 
+## 🤔 Why HHP? (The Pain Points vs. The Cure)
+
+### ❓ What goes wrong when building multi-agent systems without HHP?
+
+* **Problem 1: Forensic Context Re-exploration**
+  * *Without HHP:* When you switch models (e.g. from Claude to Gemini due to token depletion), the new agent starts "cold." It has no idea what was recently modified, what planned steps are left, or what compiler errors just happened. The agent spends thousands of tokens doing "forensic exploration" to figure out where the previous agent left off.
+  * *With HHP:* The receiving agent instantly loads `.horizon/state.json`. It knows the exact sisa-tugas checklist, files modified, active compiler errors, and shared memory variables in **1 second**.
+
+* **Problem 2: The "Token Bleeding" Polling Trap**
+  * *Without HHP:* Traditional multi-agent coordinators run active background polling loops (daemons or cron jobs). Every single minute they wake up, they send your entire project history to the LLM to check for tasks, quickly exhausting your API quotas even when you are idle.
+  * *With HHP:* HHP is **100% stateless**. It runs purely on-demand, consuming **zero idle tokens** and **zero idle CPU**. 
+
+* **Problem 3: Walled Gardens & Vendor Lock-In**
+  * *Without HHP:* Big Tech providers want to lock you into their own chat windows. They will never build a tool that makes it easy to switch from Claude to Gemini.
+  * *With HHP:* HHP acts as an independent, open-standard "USB-C" port for AI agent memory, giving you complete freedom to hot-swap models depending on their strengths.
+
+---
+
+## 🏆 What makes HHP uniquely different from other tools?
+
+* **HHP vs. LangGraph / Microsoft Autogen:** Frameworks like LangGraph are developer libraries for building a *single* multi-agent application. HHP is an **interactive developer tool** designed to coordinate *different, independent* desktop and IDE agents (like Claude Desktop and VS Code/Antigravity) together.
+* **HHP vs. Aider / Claude Code:** These are single-agent command-line runtimes. HHP is not a runtime; it is a **universal state-sharing protocol** that lets multiple different runtimes collaborate on the same repository.
+* **HHP vs. Traditional RAG:** Vector search tools are built for humans to query documentation. HHP's state compactor is engineered specifically for **agent-to-agent kognitive handoffs**, utilizing AST and Git-diffs to package information for LLMs.
+
+---
+
 ## 🏃‍♂️ Get Started in 60 Seconds!
 
 Don't wait—experience the future of collaborative AI coding right now!
